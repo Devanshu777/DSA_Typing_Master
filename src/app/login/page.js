@@ -1,21 +1,19 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
   LightningIcon,
   CheckIcon,
   SparklesIcon,
-  FlameIcon
+  FlameIcon,
+  CompassIcon
 } from "@/components/Icons";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, status, loginWithGoogleCredential, loginWithMockGoogle, googleClientId } = useAuth();
-  const [customEmail, setCustomEmail] = useState("");
-  const [customName, setCustomName] = useState("");
-  const [showManualLogin, setShowManualLogin] = useState(false);
+  const { status, loginWithGoogleCredential, loginWithMockGoogle, loginAsGuest, googleClientId } = useAuth();
   const gsiLoadedRef = useRef(false);
 
   // If already logged in, redirect to dashboard
@@ -64,22 +62,6 @@ export default function LoginPage() {
       }
     };
   }, [googleClientId, loginWithGoogleCredential]);
-
-  const handleQuickGoogleSignIn = () => {
-    if (googleClientId && window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
-    } else {
-      // One-click demo sign in
-      loginWithMockGoogle("devanshu@gmail.com", "Devanshu");
-    }
-  };
-
-  const handleManualSubmit = (e) => {
-    e.preventDefault();
-    if (!customEmail.trim()) return;
-    const name = customName.trim() || customEmail.split("@")[0];
-    loginWithMockGoogle(customEmail.trim(), name);
-  };
 
   return (
     <div
@@ -151,144 +133,86 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Real GSI Button container if Google Client ID is configured */}
+        {/* Official Google GSI Button Container */}
         <div
           id="gsi-button-container"
           style={{
             display: "flex",
             justifyContent: "center",
-            marginBottom: googleClientId ? "16px" : "0px"
+            width: "100%",
+            minHeight: "44px",
+            marginBottom: "4px"
           }}
         />
 
-        {/* Primary Google Sign In Button */}
+        {/* Fallback button if Client ID is not yet provided */}
+        {!googleClientId && (
+          <button
+            onClick={() => loginWithMockGoogle("devanshu@gmail.com", "Devanshu")}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "12px",
+              padding: "12px 20px",
+              background: "#1f1f1f",
+              color: "#ffffff",
+              borderRadius: "8px",
+              border: "1px solid var(--border-subtle)",
+              fontSize: "0.92rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.15s ease"
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+        )}
+
+        {/* Subtle 'OR' Divider */}
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", margin: "18px 0 16px 0" }}>
+          <div style={{ flex: 1, height: "1px", background: "var(--border-subtle)" }} />
+          <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>or</span>
+          <div style={{ flex: 1, height: "1px", background: "var(--border-subtle)" }} />
+        </div>
+
+        {/* Continue as Guest Button */}
         <button
-          onClick={handleQuickGoogleSignIn}
+          onClick={loginAsGuest}
+          className="btn btn-ghost"
           style={{
             width: "100%",
+            padding: "12px 20px",
+            fontSize: "0.9rem",
+            fontWeight: 600,
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "8px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: "12px",
-            padding: "12px 20px",
-            background: "#ffffff",
-            color: "#1f1f1f",
-            borderRadius: "8px",
-            border: "1px solid #e2e8f0",
-            fontSize: "0.92rem",
-            fontWeight: 600,
+            gap: "8px",
+            color: "var(--text-primary)",
+            background: "rgba(255, 255, 255, 0.04)",
             cursor: "pointer",
-            transition: "all 0.15s ease",
-            boxShadow: "0 2px 10px rgba(0, 0, 0, 0.15)"
+            transition: "all 0.15s ease"
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "#f1f5f9")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)")}
         >
-          {/* Official Google 'G' Logo SVG */}
-          <svg width="20" height="20" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.04 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-            />
-          </svg>
-          <span>Continue with Google</span>
+          <CompassIcon size={16} style={{ color: "var(--accent-primary)" }} />
+          <span>Continue as Guest</span>
         </button>
 
-        {/* Or custom Google account login */}
-        <div style={{ textAlign: "center", margin: "16px 0 12px 0" }}>
-          <button
-            onClick={() => setShowManualLogin((prev) => !prev)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "var(--text-muted)",
-              fontSize: "0.75rem",
-              cursor: "pointer",
-              textDecoration: "underline"
-            }}
-          >
-            {showManualLogin ? "Hide manual account input" : "Or sign in with custom Gmail / Name"}
-          </button>
-        </div>
-
-        {showManualLogin && (
-          <form
-            onSubmit={handleManualSubmit}
-            style={{
-              background: "#141414",
-              border: "1px solid var(--border-subtle)",
-              borderRadius: "10px",
-              padding: "16px",
-              marginBottom: "16px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px"
-            }}
-          >
-            <div>
-              <label style={{ display: "block", fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "4px" }}>
-                Google Email (@gmail.com)
-              </label>
-              <input
-                type="email"
-                required
-                placeholder="your.name@gmail.com"
-                value={customEmail}
-                onChange={(e) => setCustomEmail(e.target.value)}
-                style={{
-                  width: "100%",
-                  background: "#1c1c1c",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: "6px",
-                  padding: "8px 10px",
-                  color: "#fff",
-                  fontSize: "0.82rem"
-                }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "0.72rem", color: "var(--text-muted)", marginBottom: "4px" }}>
-                Display Name
-              </label>
-              <input
-                type="text"
-                placeholder="Devanshu"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                style={{
-                  width: "100%",
-                  background: "#1c1c1c",
-                  border: "1px solid var(--border-subtle)",
-                  borderRadius: "6px",
-                  padding: "8px 10px",
-                  color: "#fff",
-                  fontSize: "0.82rem"
-                }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              style={{ width: "100%", padding: "8px", fontSize: "0.82rem", marginTop: "4px" }}
-            >
-              Sign In
-            </button>
-          </form>
-        )}
+        <p style={{ textAlign: "center", marginTop: "10px", marginBottom: "0", fontSize: "0.74rem", color: "var(--text-muted)" }}>
+          No login required • Saves progress locally in your browser storage
+        </p>
 
         {/* Feature Highlights */}
         <div

@@ -8,6 +8,7 @@ const AuthContext = createContext({
   status: "loading", // "loading" | "authenticated" | "unauthenticated"
   loginWithGoogleCredential: () => {},
   loginWithMockGoogle: () => {},
+  loginAsGuest: () => {},
   logout: () => {},
   googleClientId: ""
 });
@@ -94,6 +95,23 @@ export function AuthProvider({ children }) {
     router.push("/");
   }, [router]);
 
+  // Guest login (no account required, 100% browser storage)
+  const loginAsGuest = useCallback(() => {
+    const guestData = {
+      id: "guest-user",
+      name: "Guest",
+      email: "Guest Mode (Local Storage)",
+      image: "https://api.dicebear.com/7.x/bottts/svg?seed=Guest&backgroundColor=ec6242",
+      isGuest: true,
+      loginProvider: "guest",
+      loginAt: new Date().toISOString()
+    };
+    setUser(guestData);
+    setStatus("authenticated");
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(guestData));
+    router.push("/");
+  }, [router]);
+
   // Logout
   const logout = useCallback(() => {
     setUser(null);
@@ -109,6 +127,7 @@ export function AuthProvider({ children }) {
         status,
         loginWithGoogleCredential,
         loginWithMockGoogle,
+        loginAsGuest,
         logout,
         googleClientId
       }}

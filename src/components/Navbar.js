@@ -193,27 +193,27 @@ export default function Navbar() {
                 onClick={() => setIsProfileOpen(prev => !prev)}
                 className="btn btn-ghost"
                 style={{
-                  padding: "3px 8px 3px 4px",
+                  padding: "3px 10px 3px 6px",
                   height: "32px",
                   gap: "6px",
                   borderRadius: "20px",
-                  background: "rgba(255, 255, 255, 0.04)"
+                  background: user.isGuest ? "rgba(255, 255, 255, 0.05)" : "rgba(236, 98, 66, 0.08)",
+                  border: user.isGuest ? "1px solid var(--border-subtle)" : "1px solid rgba(236, 98, 66, 0.3)"
                 }}
-                title={`Logged in as ${user.name}`}
+                title={user.isGuest ? "Browsing in Guest Mode (Local Storage)" : `Logged in as ${user.name}`}
               >
                 <img
                   src={user.image}
                   alt={user.name}
                   style={{
-                    width: "22px",
-                    height: "22px",
+                    width: "20px",
+                    height: "20px",
                     borderRadius: "50%",
-                    objectFit: "cover",
-                    border: "1px solid rgba(236, 98, 66, 0.4)"
+                    objectFit: "cover"
                   }}
                 />
                 <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-primary)", maxWidth: "80px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {user.name.split(" ")[0]}
+                  {user.isGuest ? "Guest" : user.name.split(" ")[0]}
                 </span>
               </button>
 
@@ -234,8 +234,12 @@ export default function Navbar() {
                   }}
                 >
                   <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--border-subtle)", marginBottom: "6px" }}>
-                    <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#fff" }}>{user.name}</div>
-                    <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
+                    <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#fff" }}>
+                      {user.isGuest ? "Guest Mode" : user.name}
+                    </div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {user.isGuest ? "Browser Storage Active" : user.email}
+                    </div>
                   </div>
                   <Link
                     href="/stats"
@@ -251,25 +255,48 @@ export default function Navbar() {
                   >
                     My Stats &amp; Heatmap
                   </Link>
-                  <button
-                    onClick={() => {
-                      setIsProfileOpen(false);
-                      logout();
-                    }}
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "6px 10px",
-                      fontSize: "0.78rem",
-                      color: "var(--accent-error)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      borderRadius: "6px"
-                    }}
-                  >
-                    Sign Out
-                  </button>
+
+                  {user.isGuest ? (
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        logout();
+                      }}
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "6px 10px",
+                        fontSize: "0.78rem",
+                        color: "var(--accent-primary)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        borderRadius: "6px"
+                      }}
+                    >
+                      Sign In with Google
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        logout();
+                      }}
+                      style={{
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "6px 10px",
+                        fontSize: "0.78rem",
+                        color: "var(--accent-error)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        borderRadius: "6px"
+                      }}
+                    >
+                      Sign Out
+                    </button>
+                  )}
                 </div>
               )}
             </div>
