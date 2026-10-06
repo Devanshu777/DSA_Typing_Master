@@ -1,6 +1,7 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { AuthProvider } from "@/context/AuthContext";
+import AuthGuard from "@/components/AuthGuard";
 
 export const metadata = {
   title: "DSA Typing Master — Code Speed & Pattern Fluency",
@@ -20,10 +21,14 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-        <Navbar />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-          {children}
-        </div>
+        <AuthProvider>
+          <Navbar />
+          <AuthGuard>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+              {children}
+            </div>
+          </AuthGuard>
+        </AuthProvider>
       </body>
     </html>
   );
