@@ -2,6 +2,10 @@
 
 > Master LeetCode algorithmic patterns and build blazing-fast code typing muscle memory with high-retention drills. Inspired by Letta's dark minimalist aesthetic.
 
+🌐 **Live Website:** [https://dsa-typing-master.vercel.app/](https://dsa-typing-master.vercel.app/)
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-dsa--typing--master.vercel.app-EC6242?style=for-the-badge&logo=vercel)](https://dsa-typing-master.vercel.app/)
+
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![Python](https://img.shields.io/badge/Code-Python_3-3776AB?style=flat-square&logo=python)
 ![Vercel](https://img.shields.io/badge/Deploy-Vercel%20Hobby%20(Free)-00C7B7?style=flat-square&logo=vercel)
