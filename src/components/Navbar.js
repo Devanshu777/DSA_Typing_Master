@@ -96,23 +96,24 @@ export default function Navbar() {
           </Link>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {/* Quick Search Palette Trigger */}
           <button
             onClick={() => setIsSearchOpen(true)}
             className="btn btn-ghost"
             style={{
-              padding: "6px 12px",
+              padding: "6px 10px",
               height: "32px",
               fontSize: "0.78rem",
-              gap: "8px",
+              gap: "6px",
               background: "rgba(255, 255, 255, 0.03)"
             }}
             title="Search Problems & Patterns (Ctrl + K)"
           >
             <SearchIcon size={14} style={{ color: "var(--text-muted)" }} />
-            <span style={{ color: "var(--text-secondary)" }}>Search</span>
+            <span className="desktop-only" style={{ color: "var(--text-secondary)" }}>Search</span>
             <kbd
+              className="desktop-only"
               style={{
                 fontFamily: "var(--mono)",
                 fontSize: "0.68rem",
@@ -148,27 +149,27 @@ export default function Navbar() {
             title="Completed Problems"
           >
             <CheckIcon size={12} style={{ color: "var(--easy)" }} />
-            <span>{stats.completedCount} / {totalProblemCount}</span>
+            <span>{stats.completedCount} <span className="desktop-only">/ {totalProblemCount}</span></span>
           </div>
 
           {/* Sound Controls Trigger (Profile & Volume) */}
           <button
             onClick={() => setIsSoundModalOpen(true)}
             className="btn btn-ghost"
-            style={{ padding: "6px 10px", height: "32px", gap: "6px", fontSize: "0.76rem" }}
+            style={{ padding: "6px 8px", height: "32px", gap: "6px", fontSize: "0.76rem" }}
             title="Configure Mechanical Switch Sound Profiles"
           >
             {stats.sound ? (
               <>
                 <VolumeOnIcon size={15} style={{ color: "var(--accent-primary)" }} />
-                <span style={{ textTransform: "capitalize", color: "var(--text-secondary)" }}>
+                <span className="desktop-only" style={{ textTransform: "capitalize", color: "var(--text-secondary)" }}>
                   {stats.soundProfile}
                 </span>
               </>
             ) : (
               <>
                 <VolumeOffIcon size={15} style={{ color: "var(--text-muted)" }} />
-                <span style={{ color: "var(--text-muted)" }}>Muted</span>
+                <span className="desktop-only" style={{ color: "var(--text-muted)" }}>Muted</span>
               </>
             )}
           </button>
@@ -177,7 +178,7 @@ export default function Navbar() {
             href="https://github.com/Devanshu777/DSA_Typing_Master"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-ghost"
+            className="btn btn-ghost desktop-only"
             style={{ padding: "6px 10px", height: "32px", fontSize: "0.75rem" }}
           >
             <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">

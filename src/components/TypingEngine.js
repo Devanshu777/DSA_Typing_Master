@@ -81,7 +81,13 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
     if (peekTimerRef.current) clearTimeout(peekTimerRef.current);
     setIsPeeking(false);
     if (timerRef.current) clearInterval(timerRef.current);
-    if (containerRef.current) containerRef.current.focus();
+    if (inputProxyRef.current) inputProxyRef.current.value = DUMMY_BUFFER;
+    setProxyVal(DUMMY_BUFFER);
+    if (inputProxyRef.current) {
+      inputProxyRef.current.focus();
+    } else if (containerRef.current) {
+      containerRef.current.focus();
+    }
   }, [code, isEligibleForSkip, bpLen]);
 
   const handleReset = useCallback(() => {
@@ -109,7 +115,13 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
     if (peekTimerRef.current) clearTimeout(peekTimerRef.current);
     setIsPeeking(false);
     if (timerRef.current) clearInterval(timerRef.current);
-    if (containerRef.current) containerRef.current.focus();
+    if (inputProxyRef.current) inputProxyRef.current.value = DUMMY_BUFFER;
+    setProxyVal(DUMMY_BUFFER);
+    if (inputProxyRef.current) {
+      inputProxyRef.current.focus();
+    } else if (containerRef.current) {
+      containerRef.current.focus();
+    }
   }, [problem.id, isEligibleForSkip, bpLen, code]);
 
   // Timer loop & Monkeytype-style WPM Progression Sampling
@@ -185,6 +197,29 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
   const currentAccuracy = totalKeystrokes > 0 ? Math.round((correctCount / totalKeystrokes) * 100) : 100;
   const progressPercent = targetChars > 0 ? Math.min(100, Math.round((userTypedLength / targetChars) * 100)) : 0;
 
+  const DUMMY_BUFFER = "  ";
+  const [proxyVal, setProxyVal] = useState(DUMMY_BUFFER);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const inputProxyRef = useRef(null);
+  const lastKeyHandledAtRef = useRef(0);
+
+  const focusEditor = useCallback(() => {
+    if (inputProxyRef.current) {
+      inputProxyRef.current.focus();
+    } else if (containerRef.current) {
+      containerRef.current.focus();
+    }
+  }, []);
+
+  const startTimerIfNeeded = useCallback(() => {
+    let currentStart = startTime;
+    if (!currentStart) {
+      currentStart = Date.now();
+      setStartTime(currentStart);
+    }
+    return currentStart;
+  }, [startTime]);
+
   // Complete handler
   const handleComplete = useCallback((completedTyped, currentElapsed, keystrokes, errs) => {
     setIsCompleted(true);
@@ -207,7 +242,132 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
     if (soundEnabledRef.current) playSuccessChime();
   }, [targetChars, problem]);
 
-  // Keydown handler
+  // BACKSPACE processor
+  const processBackspace = useCallback(() => {
+    if (isCompleted) return;
+    startTimerIfNeeded();
+    if (typed.length > minTypedLength) {
+      if (soundEnabledRef.current) playKeySound(false);
+      const lastTwo = typed.slice(-2);
+      if (["{}", "[]", "()", '""', "''"].includes(lastTwo) && autoCloseBrackets && typed.length - 2 >= minTypedLength) {
+        setTyped(prev => prev.slice(0, -2));
+        return;
+      }
+      if (typed.endsWith("    ") && autoIndent && typed.length - 4 >= minTypedLength) {
+        setTyped(prev => prev.slice(0, -4));
+      } else {
+        setTyped(prev => prev.slice(0, -1));
+      }
+    }
+  }, [isCompleted, startTimerIfNeeded, typed, minTypedLength, autoCloseBrackets, autoIndent]);
+
+  // TAB processor
+  const processTab = useCallback(() => {
+    if (isCompleted) return;
+    const currentStart = startTimerIfNeeded();
+    const currentPos = typed.length;
+    if (currentPos >= code.length) return;
+
+    let spacesToAdd = "    ";
+    const remainingTarget = code.slice(currentPos);
+    const matchLeadingSpaces = remainingTarget.match(/^ +/);
+    if (matchLeadingSpaces) {
+      const count = Math.min(4, matchLeadingSpaces[0].length);
+      spacesToAdd = " ".repeat(count || 4);
+    }
+
+    setTotalKeystrokes(prev => prev + 1);
+    const nextTyped = typed + spacesToAdd;
+    if (soundEnabledRef.current) playKeySound(false);
+
+    if (nextTyped.length >= code.length) {
+      setTyped(code);
+      handleComplete(code, Math.floor((Date.now() - currentStart) / 1000), totalKeystrokes + 1, mistakes);
+    } else {
+      setTyped(nextTyped);
+    }
+  }, [isCompleted, startTimerIfNeeded, typed, code, handleComplete, totalKeystrokes, mistakes]);
+
+  // ENTER processor
+  const processEnter = useCallback(() => {
+    if (isCompleted) return;
+    const currentStart = startTimerIfNeeded();
+    const currentPos = typed.length;
+    if (currentPos >= code.length) return;
+
+    const isCorrect = code[currentPos] === "\n";
+    if (!isCorrect) {
+      setMistakes(prev => prev + 1);
+      if (soundEnabledRef.current) playKeySound(true);
+    } else {
+      if (soundEnabledRef.current) playKeySound(false);
+    }
+    setTotalKeystrokes(prev => prev + 1);
+
+    let nextTyped = typed + "\n";
+    if (autoIndent && isCorrect) {
+      const restOfCode = code.slice(nextTyped.length);
+      const leadingSpaceMatch = restOfCode.match(/^( +)/);
+      if (leadingSpaceMatch) {
+        nextTyped += leadingSpaceMatch[1];
+      }
+    }
+
+    if (nextTyped.length >= code.length) {
+      setTyped(code);
+      handleComplete(code, Math.floor((Date.now() - currentStart) / 1000), totalKeystrokes + 1, mistakes + (isCorrect ? 0 : 1));
+    } else {
+      setTyped(nextTyped);
+    }
+  }, [isCompleted, startTimerIfNeeded, typed, code, autoIndent, handleComplete, totalKeystrokes, mistakes]);
+
+  // Regular single character processor
+  const processChar = useCallback((char) => {
+    if (isCompleted) return;
+    if (!char || char.length !== 1) return;
+    const currentStart = startTimerIfNeeded();
+    const currentPos = typed.length;
+    if (currentPos >= code.length) return;
+
+    const targetChar = code[currentPos];
+    const pairMap = { "{": "}", "[": "]", "(": ")", '"': '"', "'": "'" };
+    const isOpeningBracket = Boolean(pairMap[char]);
+
+    if (autoCloseBrackets && isOpeningBracket && targetChar === char) {
+      const closingChar = pairMap[char];
+      if (code[currentPos + 1] === closingChar) {
+        if (soundEnabledRef.current) playKeySound(false);
+        setTotalKeystrokes(prev => prev + 1);
+        const nextTyped = typed + char + closingChar;
+        if (nextTyped.length >= code.length) {
+          setTyped(code);
+          handleComplete(code, Math.floor((Date.now() - currentStart) / 1000), totalKeystrokes + 1, mistakes);
+        } else {
+          setTyped(nextTyped);
+        }
+        return;
+      }
+    }
+
+    const isCorrect = char === targetChar;
+    if (!isCorrect) {
+      setMistakes(prev => prev + 1);
+      if (soundEnabledRef.current) playKeySound(true);
+    } else {
+      if (soundEnabledRef.current) playKeySound(false);
+    }
+    setTotalKeystrokes(prev => prev + 1);
+
+    const nextTyped = typed + char;
+    if (nextTyped.length >= code.length) {
+      setTyped(code);
+      handleComplete(code, Math.floor((Date.now() - currentStart) / 1000), totalKeystrokes + 1, mistakes + (isCorrect ? 0 : 1));
+    } else {
+      setTyped(nextTyped);
+    }
+  }, [isCompleted, startTimerIfNeeded, typed, code, autoCloseBrackets, handleComplete, totalKeystrokes, mistakes]);
+
+  // Keydown handler (for desktop & hardware keyboards)
   const handleKeyDown = (e) => {
     if (isCompleted) return;
 
@@ -216,146 +376,69 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
       return;
     }
 
-    // Start timer on first keypress
-    let currentStart = startTime;
-    if (!currentStart) {
-      currentStart = Date.now();
-      setStartTime(currentStart);
-    }
-
-    // BACKSPACE
     if (e.key === "Backspace") {
       e.preventDefault();
-      if (typed.length > minTypedLength) {
-        if (soundEnabledRef.current) playKeySound(false);
-        // If user pressed backspace right after an empty bracket pair, delete both!
-        const lastTwo = typed.slice(-2);
-        if (["{}", "[]", "()", '""', "''"].includes(lastTwo) && autoCloseBrackets && typed.length - 2 >= minTypedLength) {
-          setTyped(prev => prev.slice(0, -2));
-          return;
-        }
-        // If user pressed backspace right after indentation, delete up to 4 spaces
-        if (typed.endsWith("    ") && autoIndent && typed.length - 4 >= minTypedLength) {
-          setTyped(prev => prev.slice(0, -4));
-        } else {
-          setTyped(prev => prev.slice(0, -1));
-        }
-      }
+      lastKeyHandledAtRef.current = Date.now();
+      processBackspace();
       return;
     }
 
-    // TAB key: user wants to indent (4 spaces)
     if (e.key === "Tab") {
       e.preventDefault();
-      const currentPos = typed.length;
-      if (currentPos >= code.length) return;
-
-      // Check how many spaces are needed at current position
-      let spacesToAdd = "    ";
-      // If code expects spaces ahead, match up to 4 spaces
-      const remainingTarget = code.slice(currentPos);
-      const matchLeadingSpaces = remainingTarget.match(/^ +/);
-      if (matchLeadingSpaces) {
-        const count = Math.min(4, matchLeadingSpaces[0].length);
-        spacesToAdd = " ".repeat(count || 4);
-      }
-
-      setTotalKeystrokes(prev => prev + 1);
-      const nextTyped = typed + spacesToAdd;
-      if (soundEnabledRef.current) playKeySound(false);
-
-      if (nextTyped.length >= code.length) {
-        setTyped(code);
-        handleComplete(code, Math.floor((Date.now() - currentStart) / 1000), totalKeystrokes + 1, mistakes);
-      } else {
-        setTyped(nextTyped);
-      }
+      lastKeyHandledAtRef.current = Date.now();
+      processTab();
       return;
     }
 
-    // ENTER key
     if (e.key === "Enter") {
       e.preventDefault();
-      const currentPos = typed.length;
-      if (currentPos >= code.length) return;
-
-      const isCorrect = code[currentPos] === "\n";
-      if (!isCorrect) {
-        setMistakes(prev => prev + 1);
-        if (soundEnabledRef.current) playKeySound(true);
-      } else {
-        if (soundEnabledRef.current) playKeySound(false);
-      }
-      setTotalKeystrokes(prev => prev + 1);
-
-      let nextTyped = typed + "\n";
-
-      // If auto-indent is enabled and target code has leading spaces on next line, auto-fill them!
-      if (autoIndent && isCorrect) {
-        const restOfCode = code.slice(nextTyped.length);
-        const leadingSpaceMatch = restOfCode.match(/^( +)/);
-        if (leadingSpaceMatch) {
-          nextTyped += leadingSpaceMatch[1];
-        }
-      }
-
-      if (nextTyped.length >= code.length) {
-        setTyped(code);
-        handleComplete(code, Math.floor((Date.now() - currentStart) / 1000), totalKeystrokes + 1, mistakes + (isCorrect ? 0 : 1));
-      } else {
-        setTyped(nextTyped);
-      }
+      lastKeyHandledAtRef.current = Date.now();
+      processEnter();
       return;
     }
 
-    // Regular single character
     if (e.key.length === 1) {
       e.preventDefault();
-      const currentPos = typed.length;
-      if (currentPos >= code.length) return;
+      lastKeyHandledAtRef.current = Date.now();
+      processChar(e.key);
+    }
+  };
 
-      const targetChar = code[currentPos];
+  // Mobile virtual keyboard input change handler
+  const handleProxyChange = (e) => {
+    if (isCompleted) return;
+    const timeSinceKeydown = Date.now() - lastKeyHandledAtRef.current;
+    const val = e.target.value;
 
-      // Auto-closing brackets / pairs: {}, [], (), "", ''
-      const pairMap = { "{": "}", "[": "]", "(": ")", '"': '"', "'": "'" };
-      const isOpeningBracket = Boolean(pairMap[e.key]);
+    // Avoid double-processing if keydown already handled this within 30ms
+    if (timeSinceKeydown < 30 && val !== DUMMY_BUFFER) {
+      e.target.value = DUMMY_BUFFER;
+      setProxyVal(DUMMY_BUFFER);
+      return;
+    }
 
-      if (autoCloseBrackets && isOpeningBracket && targetChar === e.key) {
-        const closingChar = pairMap[e.key];
-        // If code expects immediate closing bracket (e.g. {}, [], (), "", '')
-        if (code[currentPos + 1] === closingChar) {
-          if (soundEnabledRef.current) playKeySound(false);
-          setTotalKeystrokes(prev => prev + 1);
-          const nextTyped = typed + e.key + closingChar;
-          if (nextTyped.length >= code.length) {
-            setTyped(code);
-            handleComplete(code, Math.floor((Date.now() - currentStart) / 1000), totalKeystrokes + 1, mistakes);
-          } else {
-            setTyped(nextTyped);
-          }
-          return;
+    if (val.length < DUMMY_BUFFER.length) {
+      // Mobile backspace pressed
+      const count = DUMMY_BUFFER.length - val.length;
+      for (let i = 0; i < count; i++) {
+        processBackspace();
+      }
+    } else if (val.length > DUMMY_BUFFER.length) {
+      // One or more characters inserted (typing, swipe, autocomplete)
+      const added = val.slice(DUMMY_BUFFER.length);
+      for (const ch of added) {
+        if (ch === "\n") {
+          processEnter();
+        } else if (ch === "\t") {
+          processTab();
+        } else {
+          processChar(ch);
         }
       }
-
-      const isCorrect = e.key === targetChar;
-
-      if (!isCorrect) {
-        setMistakes(prev => prev + 1);
-        if (soundEnabledRef.current) playKeySound(true);
-      } else {
-        if (soundEnabledRef.current) playKeySound(false);
-      }
-      setTotalKeystrokes(prev => prev + 1);
-
-      const nextTyped = typed + e.key;
-
-      if (nextTyped.length >= code.length) {
-        setTyped(code);
-        handleComplete(code, Math.floor((Date.now() - currentStart) / 1000), totalKeystrokes + 1, mistakes + (isCorrect ? 0 : 1));
-      } else {
-        setTyped(nextTyped);
-      }
     }
+
+    e.target.value = DUMMY_BUFFER;
+    setProxyVal(DUMMY_BUFFER);
   };
 
   const formatTime = (sec) => {
@@ -494,15 +577,45 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
         </div>
       </div>
 
+      {/* Mobile Focus Helper Banner */}
+      <button
+        type="button"
+        className={`mobile-tap-banner ${isInputFocused ? "focused" : ""}`}
+        onClick={focusEditor}
+      >
+        {isInputFocused ? (
+          <span>⌨️ Keyboard Active • Type code or use quick keys below</span>
+        ) : (
+          <span>📱 Tap Here to Open Keyboard &amp; Start Typing</span>
+        )}
+      </button>
+
       {/* Code Editor Area */}
       <div
         ref={containerRef}
         tabIndex={0}
         onKeyDown={handleKeyDown}
         className="code-editor"
-        style={{ outline: "none", cursor: "text" }}
-        onClick={() => containerRef.current && containerRef.current.focus()}
+        style={{ outline: "none", cursor: "text", position: "relative" }}
+        onClick={focusEditor}
       >
+        {/* Invisible proxy textarea for iOS/Android virtual keyboard */}
+        <textarea
+          ref={inputProxyRef}
+          className="mobile-input-proxy"
+          autoCapitalize="none"
+          autoCorrect="off"
+          autoComplete="off"
+          spellCheck="false"
+          inputMode="text"
+          aria-label="Code typing input"
+          value={proxyVal}
+          onChange={handleProxyChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setIsInputFocused(true)}
+          onBlur={() => setIsInputFocused(false)}
+        />
+
         <div className="code-editor-header">
           <div className="code-editor-dots">
             <span className="code-editor-dot" style={{ background: "#ff5f56" }} />
@@ -603,6 +716,94 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
             );
           })}
         </div>
+      </div>
+
+      {/* Mobile Quick Symbols Toolbar (Tab, Brackets, Colon, Indent, Backspace) */}
+      <div className="mobile-code-toolbar">
+        <button
+          type="button"
+          className="mobile-toolbar-btn"
+          onPointerDown={(e) => { e.preventDefault(); processTab(); focusEditor(); }}
+        >
+          Tab
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn"
+          onPointerDown={(e) => { e.preventDefault(); processChar(":"); focusEditor(); }}
+        >
+          :
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn"
+          onPointerDown={(e) => { e.preventDefault(); processChar("("); focusEditor(); }}
+        >
+          ( )
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn"
+          onPointerDown={(e) => { e.preventDefault(); processChar("["); focusEditor(); }}
+        >
+          [ ]
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn"
+          onPointerDown={(e) => { e.preventDefault(); processChar("{"); focusEditor(); }}
+        >
+          {'{ }'}
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn"
+          onPointerDown={(e) => { e.preventDefault(); processChar('"'); focusEditor(); }}
+        >
+          &quot;
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn"
+          onPointerDown={(e) => { e.preventDefault(); processChar("="); focusEditor(); }}
+        >
+          =
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn"
+          onPointerDown={(e) => { e.preventDefault(); processChar("-"); processChar(">"); focusEditor(); }}
+        >
+          -&gt;
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn"
+          onPointerDown={(e) => { e.preventDefault(); processChar("_"); focusEditor(); }}
+        >
+          _
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn"
+          onPointerDown={(e) => { e.preventDefault(); processChar("."); focusEditor(); }}
+        >
+          .
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn btn-enter"
+          onPointerDown={(e) => { e.preventDefault(); processEnter(); focusEditor(); }}
+        >
+          ↵ Enter
+        </button>
+        <button
+          type="button"
+          className="mobile-toolbar-btn btn-del"
+          onPointerDown={(e) => { e.preventDefault(); processBackspace(); focusEditor(); }}
+        >
+          ⌫
+        </button>
       </div>
 
       {/* Completion Modal Overlay with Monkeytype Analytics & Sparkline */}

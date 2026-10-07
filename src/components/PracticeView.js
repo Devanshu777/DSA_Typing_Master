@@ -59,6 +59,7 @@ export default function PracticeView({ initialSlug }) {
   const [isChatGptOpen, setIsChatGptOpen] = useState(false);
   const [chatWidth, setChatWidth] = useState(440);
   const [isResizing, setIsResizing] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   // Sync completion data & custom problems
   useEffect(() => {
@@ -179,6 +180,7 @@ export default function PracticeView({ initialSlug }) {
 
   return (
     <div
+      className="practice-viewport"
       style={{
         display: "flex",
         height: "calc(100vh - 64px)",
@@ -202,18 +204,65 @@ export default function PracticeView({ initialSlug }) {
         />
       )}
 
-      {/* 1. Left Sidebar navigation */}
-      <Sidebar
-        phases={sidebarPhases}
-        currentProblemId={currentProblem.id}
-        onSelectProblem={handleSelectProblem}
-        completedMap={completedMap}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
-      />
+      {/* 1. Desktop Left Sidebar navigation */}
+      <div className="desktop-sidebar">
+        <Sidebar
+          phases={sidebarPhases}
+          currentProblemId={currentProblem.id}
+          onSelectProblem={handleSelectProblem}
+          completedMap={completedMap}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
+        />
+      </div>
 
-      {/* 2. Middle Main Practice Area (flex: 1, minWidth: 0 so it fluidly shrinks when right panel opens/resizes) */}
+      {/* Mobile Curriculum Slide-in Drawer */}
+      {isMobileDrawerOpen && (
+        <div
+          className="mobile-drawer-overlay"
+          onClick={() => setIsMobileDrawerOpen(false)}
+        />
+      )}
+      <div className={`mobile-sidebar-drawer ${isMobileDrawerOpen ? "open" : ""}`}>
+        <div
+          style={{
+            padding: "12px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid var(--border-subtle)",
+            background: "var(--bg-card)"
+          }}
+        >
+          <span style={{ fontWeight: 700, fontSize: "0.88rem", color: "var(--text-primary)" }}>
+            📚 Curriculum ({allProblems.length} Problems)
+          </span>
+          <button
+            onClick={() => setIsMobileDrawerOpen(false)}
+            className="btn btn-ghost"
+            style={{ padding: "4px 8px", minWidth: "28px", height: "28px" }}
+          >
+            ✕
+          </button>
+        </div>
+        <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+          <Sidebar
+            phases={sidebarPhases}
+            currentProblemId={currentProblem.id}
+            onSelectProblem={(id) => {
+              handleSelectProblem(id);
+              setIsMobileDrawerOpen(false);
+            }}
+            completedMap={completedMap}
+            isCollapsed={false}
+            onToggleCollapse={() => setIsMobileDrawerOpen(false)}
+          />
+        </div>
+      </div>
+
+      {/* 2. Middle Main Practice Area */}
       <main
+        className="practice-main"
         style={{
           flex: 1,
           minWidth: 0,
@@ -226,6 +275,7 @@ export default function PracticeView({ initialSlug }) {
       >
         {/* Navigation bar between problems */}
         <div
+          className="practice-problem-header"
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -244,7 +294,17 @@ export default function PracticeView({ initialSlug }) {
             </h1>
           </div>
 
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+            {/* Mobile Curriculum Drawer Button */}
+            <button
+              onClick={() => setIsMobileDrawerOpen(true)}
+              className="btn btn-ghost mobile-only-btn"
+              style={{ height: "32px", fontSize: "0.78rem", gap: "6px" }}
+              title="Open Curriculum Drawer"
+            >
+              <span>📚 Problems ({allProblems.length})</span>
+            </button>
+
             {/* Custom Drill Button */}
             <button
               onClick={() => setIsCustomModalOpen(true)}
@@ -253,7 +313,7 @@ export default function PracticeView({ initialSlug }) {
               title="Add any custom Python code or interview problem to drill"
             >
               <CodeIcon size={14} style={{ color: "var(--accent-primary)" }} />
-              <span>+ Custom Drill</span>
+              <span className="desktop-only">+ Custom Drill</span>
             </button>
 
             {/* AI Tutor Right-Panel Toggle Button */}

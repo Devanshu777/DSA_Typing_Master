@@ -198,6 +198,7 @@ Question: ${customQ || "Please explain the intuition, algorithm breakdown, and e
     <>
       {/* Draggable Resizer Bar */}
       <div
+        className="ai-chat-resizer"
         onMouseDown={onStartResize}
         style={{
           width: "12px",
@@ -237,6 +238,7 @@ Question: ${customQ || "Please explain the intuition, algorithm breakdown, and e
 
       {/* Right AI Panel */}
       <div
+        className="ai-chat-panel"
         style={{
           width: `${width}px`,
           minWidth: "300px",
