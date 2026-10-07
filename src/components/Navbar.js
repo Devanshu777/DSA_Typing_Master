@@ -156,6 +156,12 @@ export default function Navbar() {
           >
             Practice
           </Link>
+          <Link
+            href="/templates"
+            className={pathname.startsWith("/templates") ? "active" : ""}
+          >
+            Templates
+          </Link>
           <Link href="/stats" className={pathname === "/stats" ? "active" : ""}>
             Stats
           </Link>

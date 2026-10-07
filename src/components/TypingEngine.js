@@ -14,7 +14,11 @@ import {
   LightningIcon,
   RotateCcwIcon,
   ChevronRightIcon,
-  TrophyIcon
+  TrophyIcon,
+  ShareIcon,
+  CopyIcon,
+  TwitterIcon,
+  CheckIcon
 } from "@/components/Icons";
 
 export default function TypingEngine({ problem, onNext, onPrev }) {
@@ -36,6 +40,34 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
   const [autoCloseBrackets, setAutoCloseBrackets] = useState(true);
   const [wpmTimeline, setWpmTimeline] = useState([]);
   const [burstWpm, setBurstWpm] = useState(0);
+  const [copiedToast, setCopiedToast] = useState(false);
+
+  const getShareText = () => {
+    const url = typeof window !== "undefined" ? window.location.href : "https://dsa-typing-master.vercel.app";
+    return `⚡ DSA Typing Master Result
+Problem: ${problem.name}
+Speed: ${finalStats?.wpm || 0} WPM | Accuracy: ${finalStats?.accuracy || 100}%
+Time: ${formatTime(finalStats?.timeSec || 0)} | Peak: ${burstWpm || finalStats?.wpm || 0} WPM${blindRecall ? " | Mode: 🧠 Blind Recall" : ""}
+Pattern: ${problem.pattern || problem.category || "Algorithm Drill"}
+Practice & build muscle memory: ${url}`;
+  };
+
+  const handleCopyShare = async () => {
+    try {
+      await navigator.clipboard.writeText(getShareText());
+      setCopiedToast(true);
+      setTimeout(() => setCopiedToast(false), 2500);
+    } catch (e) {
+      console.error("Clipboard copy failed", e);
+    }
+  };
+
+  const handleTweet = () => {
+    const url = typeof window !== "undefined" ? window.location.href : "https://dsa-typing-master.vercel.app";
+    const tweetText = `Just drilled ${problem.name} on DSA Typing Master ⚡\n\n🏆 ${finalStats?.wpm || 0} WPM | ${finalStats?.accuracy || 100}% Accuracy in ${formatTime(finalStats?.timeSec || 0)}${blindRecall ? " (Blind Recall 🧠)" : ""}\n🔥 Building algorithmic muscle memory for technical interviews\n\n${url}`;
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+    window.open(tweetUrl, "_blank", "noopener,noreferrer");
+  };
 
   const containerRef = useRef(null);
   const timerRef = useRef(null);
@@ -839,86 +871,176 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
       </div>
 
       {/* Completion Modal Overlay with Monkeytype Analytics & Sparkline */}
-      {isCompleted && finalStats && (
-        <div className="completion-overlay">
-          <div className="completion-card" style={{ maxWidth: "520px" }}>
-            <div
-              style={{
-                width: "56px",
-                height: "56px",
-                borderRadius: "50%",
-                background: "rgba(245, 158, 11, 0.12)",
-                border: "1px solid rgba(245, 158, 11, 0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 14px auto",
-                boxShadow: "0 0 20px rgba(245, 158, 11, 0.2)"
-              }}
-            >
-              <TrophyIcon size={28} style={{ color: "#f59e0b" }} />
-            </div>
-            <h2 className="gradient-text">Problem Mastered!</h2>
-            <p>
-              You just typed <strong>{problem.name}</strong> with high pattern recall.
-            </p>
+      {isCompleted && finalStats && (() => {
+        const isTemplate = Boolean(problem?.category && (problem?.pattern?.toLowerCase().includes("template") || problem?.id?.includes("sliding") || problem?.id?.includes("binary-search") || problem?.id?.includes("pointers") || problem?.id?.includes("stack") || problem?.id?.includes("prefix")));
 
-            <div className="completion-stats">
-              <div className="completion-stat">
-                <div className="completion-stat-value" style={{ color: "var(--accent-secondary)" }}>
-                  {finalStats.wpm}
+        return (
+          <div className="completion-overlay">
+            <div className="completion-card" style={{ maxWidth: "480px" }}>
+              <div
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  background: "rgba(245, 158, 11, 0.12)",
+                  border: "1px solid rgba(245, 158, 11, 0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 8px auto",
+                  boxShadow: "0 0 16px rgba(245, 158, 11, 0.2)"
+                }}
+              >
+                <TrophyIcon size={20} style={{ color: "#f59e0b" }} />
+              </div>
+              <h2 className="gradient-text">
+                {isTemplate ? "Template Mastered!" : "Problem Mastered!"}
+              </h2>
+              <p>
+                You just typed <strong>{problem.name}</strong> with high pattern recall.
+              </p>
+
+              <div className="completion-stats">
+                <div className="completion-stat">
+                  <div className="completion-stat-value" style={{ color: "var(--accent-secondary)" }}>
+                    {finalStats.wpm}
+                  </div>
+                  <div className="completion-stat-label">Average WPM</div>
                 </div>
-                <div className="completion-stat-label">Average WPM</div>
+
+                <div className="completion-stat">
+                  <div className="completion-stat-value" style={{ color: "var(--accent-primary)" }}>
+                    {finalStats.accuracy}%
+                  </div>
+                  <div className="completion-stat-label">Accuracy</div>
+                </div>
+
+                <div className="completion-stat">
+                  <div className="completion-stat-value">
+                    {formatTime(finalStats.timeSec)}
+                  </div>
+                  <div className="completion-stat-label">Total Time</div>
+                </div>
+
+                <div className="completion-stat">
+                  <div className="completion-stat-value" style={{ color: "#f59e0b" }}>
+                    {burstWpm || finalStats.wpm}
+                  </div>
+                  <div className="completion-stat-label">Burst Peak</div>
+                </div>
               </div>
 
-              <div className="completion-stat">
-                <div className="completion-stat-value" style={{ color: "var(--accent-primary)" }}>
-                  {finalStats.accuracy}%
+              {/* Monkeytype-style Speed Progression Sparkline */}
+              <WpmSparkline
+                data={wpmTimeline}
+                finalWpm={finalStats.wpm}
+                burstWpm={burstWpm}
+              />
+
+              {/* Feature 6: Shareable Result Card Preview & Quick Share Actions */}
+              <div
+                style={{
+                  background: "var(--bg-input)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "10px 12px",
+                  marginTop: "10px",
+                  marginBottom: "8px",
+                  textAlign: "left"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <LightningIcon size={13} style={{ color: "var(--accent-primary)" }} />
+                    <span style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.5px", color: "var(--text-secondary)", textTransform: "uppercase" }}>
+                      Shareable Result Card
+                    </span>
+                  </div>
+                  <span className="badge" style={{ fontSize: "0.66rem", padding: "1px 6px" }}>
+                    {problem.difficulty || "Drill"}
+                  </span>
                 </div>
-                <div className="completion-stat-label">Accuracy</div>
+
+                <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-primary)", marginBottom: "6px" }}>
+                  {problem.name}
+                </div>
+
+                {/* Quick Share Chips */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center", marginBottom: "10px" }}>
+                  <div style={{ fontSize: "0.76rem", background: "rgba(34, 197, 94, 0.12)", color: "var(--accent-secondary)", border: "1px solid rgba(34, 197, 94, 0.25)", padding: "2px 7px", borderRadius: "4px", fontWeight: 600 }}>
+                    ⚡ {finalStats.wpm} WPM
+                  </div>
+                  <div style={{ fontSize: "0.76rem", background: "rgba(236, 98, 66, 0.12)", color: "var(--accent-primary)", border: "1px solid rgba(236, 98, 66, 0.25)", padding: "2px 7px", borderRadius: "4px", fontWeight: 600 }}>
+                    🎯 {finalStats.accuracy}% ACC
+                  </div>
+                  <div style={{ fontSize: "0.76rem", background: "rgba(245, 158, 11, 0.12)", color: "#f59e0b", border: "1px solid rgba(245, 158, 11, 0.25)", padding: "2px 7px", borderRadius: "4px", fontWeight: 600 }}>
+                    ⏱️ {formatTime(finalStats.timeSec)}
+                  </div>
+                  {blindRecall && (
+                    <div style={{ fontSize: "0.76rem", background: "rgba(99, 102, 241, 0.12)", color: "#818cf8", border: "1px solid rgba(99, 102, 241, 0.25)", padding: "2px 7px", borderRadius: "4px", fontWeight: 600 }}>
+                      🧠 Blind Recall
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <button
+                    onClick={handleCopyShare}
+                    className="btn btn-ghost"
+                    style={{
+                      flex: 1,
+                      height: "30px",
+                      fontSize: "0.76rem",
+                      gap: "6px",
+                      background: copiedToast ? "rgba(34, 197, 94, 0.15)" : "var(--bg-elevated)",
+                      borderColor: copiedToast ? "var(--accent-secondary)" : "var(--border-subtle)",
+                      color: copiedToast ? "var(--accent-secondary)" : "var(--text-primary)"
+                    }}
+                    title="Copy formatted result card for Discord, LinkedIn, or Markdown"
+                  >
+                    {copiedToast ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
+                    <span>{copiedToast ? "Copied to Clipboard!" : "Copy Result Card"}</span>
+                  </button>
+
+                  <button
+                    onClick={handleTweet}
+                    className="btn btn-ghost"
+                    style={{
+                      height: "30px",
+                      padding: "0 10px",
+                      fontSize: "0.76rem",
+                      gap: "6px",
+                      background: "var(--bg-elevated)"
+                    }}
+                    title="Share result on X / Twitter"
+                  >
+                    <TwitterIcon size={12} style={{ color: "var(--text-primary)" }} />
+                    <span>Share on X</span>
+                  </button>
+                </div>
               </div>
 
-              <div className="completion-stat">
-                <div className="completion-stat-value">
-                  {formatTime(finalStats.timeSec)}
-                </div>
-                <div className="completion-stat-label">Total Time</div>
-              </div>
-
-              <div className="completion-stat">
-                <div className="completion-stat-value" style={{ color: "#f59e0b" }}>
-                  {burstWpm || finalStats.wpm}
-                </div>
-                <div className="completion-stat-label">Burst Peak WPM</div>
-              </div>
-            </div>
-
-            {/* Monkeytype-style Speed Progression Sparkline */}
-            <WpmSparkline
-              data={wpmTimeline}
-              finalWpm={finalStats.wpm}
-              burstWpm={burstWpm}
-            />
-
-            <div className="completion-actions">
-              <button onClick={handleReset} className="btn btn-ghost" style={{ padding: "10px 18px" }}>
-                <RotateCcwIcon size={13} />
-                <span>Practice Again (Alt+R)</span>
-              </button>
-              {onNext ? (
-                <button onClick={onNext} className="btn btn-primary" style={{ padding: "10px 22px" }}>
-                  <span>Next Problem</span>
-                  <ChevronRightIcon size={14} />
+              <div className="completion-actions" style={{ marginTop: "10px" }}>
+                <button onClick={handleReset} className="btn btn-ghost" style={{ padding: "8px 16px", height: "34px", fontSize: "0.82rem" }}>
+                  <RotateCcwIcon size={13} />
+                  <span>Practice Again (Alt+R)</span>
                 </button>
-              ) : (
-                <button onClick={handleReset} className="btn btn-primary" style={{ padding: "10px 22px" }}>
-                  Done
-                </button>
-              )}
+                {onNext ? (
+                  <button onClick={onNext} className="btn btn-primary" style={{ padding: "8px 18px", height: "34px", fontSize: "0.82rem" }}>
+                    <span>{isTemplate ? "Next Template" : "Next Problem"}</span>
+                    <ChevronRightIcon size={14} />
+                  </button>
+                ) : (
+                  <button onClick={handleReset} className="btn btn-primary" style={{ padding: "8px 18px", height: "34px", fontSize: "0.82rem" }}>
+                    Done
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
