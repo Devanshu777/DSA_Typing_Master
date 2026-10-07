@@ -8,6 +8,7 @@ import {
   ChevronRightIcon,
   CompassIcon
 } from "@/components/Icons";
+import VisualSolver from "@/components/VisualSolver";
 
 export default function IntuitionTab({ problem, onStartTyping }) {
   const [revealedAnswers, setRevealedAnswers] = useState({});
@@ -49,6 +50,9 @@ export default function IntuitionTab({ problem, onStartTyping }) {
           Reveal All Answers
         </button>
       </div>
+ 
+      {/* Interactive Visual Problem Solver */}
+      <VisualSolver problem={problem} />
 
       {problem.keyInsight && (
         <div className="key-insight" style={{ marginBottom: "24px" }}>
