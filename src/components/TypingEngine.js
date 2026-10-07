@@ -202,6 +202,7 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
   const [isInputFocused, setIsInputFocused] = useState(false);
   const inputProxyRef = useRef(null);
   const lastKeyHandledAtRef = useRef(0);
+  const lastBackspaceTimeRef = useRef(0);
 
   const focusEditor = useCallback(() => {
     if (inputProxyRef.current) {
@@ -245,6 +246,11 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
   // BACKSPACE processor
   const processBackspace = useCallback(() => {
     if (isCompleted) return;
+    const now = Date.now();
+    // Guard against duplicate event firing within 90ms
+    if (now - lastBackspaceTimeRef.current < 90) return;
+    lastBackspaceTimeRef.current = now;
+
     startTimerIfNeeded();
     if (typed.length > minTypedLength) {
       if (soundEnabledRef.current) playKeySound(false);
@@ -370,6 +376,7 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
   // Keydown handler (for desktop & hardware keyboards)
   const handleKeyDown = (e) => {
     if (isCompleted) return;
+    e.stopPropagation();
 
     // Ignore special modifier keys alone
     if (["Shift", "Control", "Alt", "Meta", "CapsLock", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Escape"].includes(e.key)) {
@@ -379,6 +386,9 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
     if (e.key === "Backspace") {
       e.preventDefault();
       lastKeyHandledAtRef.current = Date.now();
+      if (inputProxyRef.current) {
+        inputProxyRef.current.value = DUMMY_BUFFER;
+      }
       processBackspace();
       return;
     }
@@ -386,6 +396,9 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
     if (e.key === "Tab") {
       e.preventDefault();
       lastKeyHandledAtRef.current = Date.now();
+      if (inputProxyRef.current) {
+        inputProxyRef.current.value = DUMMY_BUFFER;
+      }
       processTab();
       return;
     }
@@ -393,6 +406,9 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
     if (e.key === "Enter") {
       e.preventDefault();
       lastKeyHandledAtRef.current = Date.now();
+      if (inputProxyRef.current) {
+        inputProxyRef.current.value = DUMMY_BUFFER;
+      }
       processEnter();
       return;
     }
@@ -400,6 +416,9 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
     if (e.key.length === 1) {
       e.preventDefault();
       lastKeyHandledAtRef.current = Date.now();
+      if (inputProxyRef.current) {
+        inputProxyRef.current.value = DUMMY_BUFFER;
+      }
       processChar(e.key);
     }
   };
@@ -410,8 +429,8 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
     const timeSinceKeydown = Date.now() - lastKeyHandledAtRef.current;
     const val = e.target.value;
 
-    // Avoid double-processing if keydown already handled this within 30ms
-    if (timeSinceKeydown < 30 && val !== DUMMY_BUFFER) {
+    // Avoid double-processing if keydown already handled this within 150ms
+    if (timeSinceKeydown < 150) {
       e.target.value = DUMMY_BUFFER;
       setProxyVal(DUMMY_BUFFER);
       return;
@@ -594,7 +613,6 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
       <div
         ref={containerRef}
         tabIndex={0}
-        onKeyDown={handleKeyDown}
         className="code-editor"
         style={{ outline: "none", cursor: "text", position: "relative" }}
         onClick={focusEditor}

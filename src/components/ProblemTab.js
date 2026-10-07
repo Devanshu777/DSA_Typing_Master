@@ -5,10 +5,14 @@ import {
   LightbulbIcon,
   CodeIcon,
   ChevronRightIcon,
-  CompassIcon
+  CompassIcon,
+  BookOpenIcon
 } from "@/components/Icons";
+import { getProblemDetails } from "@/data/problemDescriptions";
 
 export default function ProblemTab({ problem, onStartTyping }) {
+  const details = getProblemDetails(problem);
+
   const difficultyClass =
     problem.difficulty === "Easy"
       ? "badge-easy"
@@ -43,9 +47,78 @@ export default function ProblemTab({ problem, onStartTyping }) {
         </div>
       </div>
 
+      {/* Problem Statement Card */}
+      {details?.statement && (
+        <div
+          style={{
+            background: "var(--bg-secondary)",
+            padding: "16px 20px",
+            borderRadius: "var(--radius-md)",
+            border: "1px solid var(--border-subtle)",
+            marginTop: "16px"
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <BookOpenIcon size={15} style={{ color: "var(--accent-primary)" }} />
+              <h4 style={{ margin: 0, fontSize: "0.95rem" }}>Problem Statement</h4>
+            </div>
+            {problem.leetcodeUrl && (
+              <a
+                href={problem.leetcodeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost"
+                style={{ padding: "4px 10px", fontSize: "0.75rem", height: "26px", gap: "5px" }}
+                title="View full description, testcases, and constraints on LeetCode"
+              >
+                <span>Full Problem on LeetCode</span>
+                <ExternalLinkIcon size={12} />
+              </a>
+            )}
+          </div>
+          <p style={{ margin: 0, color: "var(--text-primary)", fontSize: "0.92rem", lineHeight: "1.6" }}>
+            {details.statement}
+          </p>
+
+          {/* Concrete Example Walkthrough */}
+          {details.example && (
+            <div
+              style={{
+                marginTop: "14px",
+                padding: "12px 14px",
+                background: "var(--bg-input)",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid rgba(255, 255, 255, 0.05)"
+              }}
+            >
+              <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>
+                Example Walkthrough
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px", fontFamily: "var(--mono)", fontSize: "0.84rem" }}>
+                <div>
+                  <span style={{ color: "var(--text-muted)" }}>Input: </span>
+                  <span style={{ color: "var(--text-code)" }}>{details.example.input}</span>
+                </div>
+                <div>
+                  <span style={{ color: "var(--text-muted)" }}>Output: </span>
+                  <span style={{ color: "var(--accent-secondary)", fontWeight: 600 }}>{details.example.output}</span>
+                </div>
+                {details.example.explanation && (
+                  <div style={{ marginTop: "4px", fontFamily: "var(--sans)", fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                    <span style={{ color: "var(--text-muted)" }}>Explanation: </span>
+                    {details.example.explanation}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Recognition Signals */}
       {problem.signals && problem.signals.length > 0 && (
-        <div className="signals-section">
+        <div className="signals-section" style={{ marginTop: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
             <CompassIcon size={14} style={{ color: "var(--accent-primary)" }} />
             <h4 style={{ margin: 0 }}>Recognition Signals (Keywords to spot this pattern)</h4>
