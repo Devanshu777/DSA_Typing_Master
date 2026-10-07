@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import problemsData from "@/data/problems";
 import { getStoredData } from "@/utils/storage";
 import { useAuth } from "@/context/AuthContext";
@@ -14,20 +14,85 @@ import {
   CheckIcon,
   VolumeOnIcon,
   VolumeOffIcon,
-  SearchIcon
+  SearchIcon,
+  SunIcon,
+  MoonIcon,
+  ChevronDownIcon
 } from "@/components/Icons";
 
 const totalProblemCount = problemsData.phases.reduce((acc, p) => {
   return acc + p.days.reduce((dAcc, d) => dAcc + d.problems.length, 0);
 }, 0);
 
+const themesList = [
+  {
+    id: "default",
+    name: "OG Theme (Default)",
+    desc: "Warm Letta Orange & Obsidian",
+    icon: LightningIcon,
+    accentColor: "#EC6242",
+    bgPreview: "#181818"
+  },
+  {
+    id: "cursor-dark",
+    name: "Cursor Dark",
+    desc: "Midnight Blue & VS Code Syntax",
+    icon: MoonIcon,
+    accentColor: "#007acc",
+    bgPreview: "#0e0e11"
+  },
+  {
+    id: "cursor-light",
+    name: "Cursor Light",
+    desc: "Warm Ivory Cream & Royal Blue",
+    icon: SunIcon,
+    accentColor: "#0066b8",
+    bgPreview: "#FAF7EE"
+  }
+];
+
 export default function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [stats, setStats] = useState({ streak: 0, completedCount: 0, sound: true, soundProfile: "thock" });
+  const [theme, setTheme] = useState("default");
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const themeMenuRef = useRef(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSoundModalOpen, setIsSoundModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Initialize theme from localStorage, default to 'default' (OG)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("dsa_theme") || "default";
+      setTheme(stored);
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  }, []);
+
+  const selectTheme = (selectedTheme) => {
+    setTheme(selectedTheme);
+    setIsThemeMenuOpen(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("dsa_theme", selectedTheme);
+      document.documentElement.setAttribute("data-theme", selectedTheme);
+      window.dispatchEvent(new CustomEvent("dsa_theme_changed", { detail: selectedTheme }));
+    }
+  };
+
+  // Close theme menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (themeMenuRef.current && !themeMenuRef.current.contains(e.target)) {
+        setIsThemeMenuOpen(false);
+      }
+    };
+    if (isThemeMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isThemeMenuOpen]);
 
   const loadStats = () => {
     const data = getStoredData();
@@ -173,6 +238,109 @@ export default function Navbar() {
               </>
             )}
           </button>
+
+          {/* 3-Theme Selector: OG Default, Cursor Dark, Cursor Light */}
+          <div style={{ position: "relative" }} ref={themeMenuRef}>
+            <button
+              onClick={() => setIsThemeMenuOpen(prev => !prev)}
+              className="btn btn-ghost"
+              style={{ padding: "6px 10px", height: "32px", gap: "6px", fontSize: "0.76rem" }}
+              title="Change Theme (Default OG, Cursor Dark, Cursor Light)"
+            >
+              {theme === "cursor-light" || theme === "light" ? (
+                <SunIcon size={14} style={{ color: "var(--accent-primary)" }} />
+              ) : theme === "cursor-dark" ? (
+                <MoonIcon size={14} style={{ color: "var(--accent-primary)" }} />
+              ) : (
+                <LightningIcon size={14} style={{ color: "var(--accent-primary)" }} />
+              )}
+              <span className="desktop-only" style={{ color: "var(--text-secondary)" }}>
+                {theme === "cursor-light" || theme === "light"
+                  ? "Cursor Light"
+                  : theme === "cursor-dark"
+                  ? "Cursor Dark"
+                  : "OG Theme"}
+              </span>
+              <ChevronDownIcon size={11} style={{ opacity: 0.6 }} />
+            </button>
+
+            {isThemeMenuOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: 0,
+                  marginTop: "6px",
+                  width: "235px",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                  padding: "6px",
+                  zIndex: 100,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px"
+                }}
+              >
+                <div style={{ padding: "6px 8px 4px 8px", fontSize: "0.68rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Select Theme
+                </div>
+                {themesList.map((t) => {
+                  const isActive = theme === t.id || (t.id === "default" && (theme === "og" || !theme));
+                  const IconComp = t.icon;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => selectTheme(t.id)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "8px 10px",
+                        borderRadius: "var(--radius-sm)",
+                        background: isActive ? "var(--bg-elevated)" : "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        transition: "all 0.15s ease",
+                        width: "100%"
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "4px",
+                            background: t.bgPreview,
+                            border: `1.5px solid ${t.accentColor}`,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0
+                          }}
+                        >
+                          <IconComp size={11} style={{ color: t.accentColor }} />
+                        </span>
+                        <div>
+                          <div style={{ fontSize: "0.8rem", fontWeight: isActive ? 700 : 500, color: "var(--text-primary)" }}>
+                            {t.name}
+                          </div>
+                          <div style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
+                            {t.desc}
+                          </div>
+                        </div>
+                      </div>
+                      {isActive && (
+                        <CheckIcon size={13} style={{ color: "var(--accent-secondary)" }} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           <a
             href="https://github.com/Devanshu777/DSA_Typing_Master"

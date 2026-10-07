@@ -121,8 +121,25 @@ export default function PracticeView({ initialSlug }) {
 
   const handleSelectProblem = useCallback((id) => {
     setCurrentProblemId(id);
-    router.push(`/practice/${id}`, { scroll: false });
-  }, [router]);
+    if (typeof window !== "undefined") {
+      window.history.pushState(null, "", `/practice/${id}`);
+    }
+  }, []);
+
+  // Listen to browser Back/Forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== "undefined") {
+        const parts = window.location.pathname.split("/");
+        const slug = parts[parts.length - 1];
+        if (slug && slug !== "practice") {
+          setCurrentProblemId(slug);
+        }
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const handleNextProblem = useCallback(() => {
     if (currentIndex < allProblems.length - 1) {

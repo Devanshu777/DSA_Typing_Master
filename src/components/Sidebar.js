@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   SearchIcon,
   FilterIcon,
@@ -20,10 +20,67 @@ export default function Sidebar({
   isCollapsed = false,
   onToggleCollapse
 }) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedPattern, setSelectedPattern] = useState("ALL");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("ALL");
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [searchTerm, setSearchTerm] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return sessionStorage.getItem("dsa_sidebar_search") || "";
+      } catch (e) {}
+    }
+    return "";
+  });
+
+  const [selectedPattern, setSelectedPattern] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return sessionStorage.getItem("dsa_sidebar_pattern") || "ALL";
+      } catch (e) {}
+    }
+    return "ALL";
+  });
+
+  const [selectedDifficulty, setSelectedDifficulty] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return sessionStorage.getItem("dsa_sidebar_difficulty") || "ALL";
+      } catch (e) {}
+    }
+    return "ALL";
+  });
+
+  const [filtersOpen, setFiltersOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = sessionStorage.getItem("dsa_sidebar_filters_open");
+        if (stored !== null) return stored === "true";
+      } catch (e) {}
+    }
+    return true;
+  });
+
+  // Sync to sessionStorage whenever filter criteria changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("dsa_sidebar_search", searchTerm);
+    } catch (e) {}
+  }, [searchTerm]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("dsa_sidebar_pattern", selectedPattern);
+    } catch (e) {}
+  }, [selectedPattern]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("dsa_sidebar_difficulty", selectedDifficulty);
+    } catch (e) {}
+  }, [selectedDifficulty]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("dsa_sidebar_filters_open", String(filtersOpen));
+    } catch (e) {}
+  }, [filtersOpen]);
 
   // Extract all unique patterns across all phases
   const allPatterns = useMemo(() => {

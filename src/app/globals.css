@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
-:root {
-  /* Letta signature design tokens */
+:root,
+[data-theme="default"],
+[data-theme="og"] {
+  /* 1. Default (OG) Letta Theme — Signature Warm Orange & Obsidian */
   --bg-primary: #181818;
   --bg-secondary: #202020;
   --bg-elevated: #282828;
@@ -9,7 +11,7 @@
   --bg-input: #141414;
 
   /* Accents */
-  --accent-primary: #EC6242; /* Letta warm orange */
+  --accent-primary: #EC6242; /* Letta signature warm orange */
   --accent-primary-hover: #f17658;
   --accent-primary-glow: rgba(236, 98, 66, 0.25);
   --accent-secondary: #22c55e; /* Crisp typing success */
@@ -19,14 +21,14 @@
   --accent-error-glow: rgba(239, 68, 68, 0.2);
   --accent-indigo: #4f46e5;
 
-  /* Letta Typography & Text */
+  /* Typography & Text */
   --text-primary: #C9CDD1;
   --text-secondary: #909499;
   --text-muted: #606469;
   --text-code: #d1d5db;
   --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
-  /* Syntax highlighting */
+  /* OG Syntax highlighting */
   --syntax-keyword: #EC6242;
   --syntax-string: #86efac;
   --syntax-function: #60a5fa;
@@ -60,6 +62,131 @@
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.55);
   --shadow-glow: 0 0 16px var(--accent-primary-glow);
+}
+
+[data-theme="cursor-dark"] {
+  /* 2. Cursor IDE Signature Dark Mode — Midnight with Electric Blue & VS Code Syntax */
+  --bg-primary: #0e0e11;
+  --bg-secondary: #17171a;
+  --bg-elevated: #222226;
+  --bg-card: #17171a;
+  --bg-input: #121215;
+
+  /* Accents — Cursor Electric Blue */
+  --accent-primary: #007acc; /* Cursor signature blue */
+  --accent-primary-hover: #38bdf8;
+  --accent-primary-glow: rgba(0, 122, 204, 0.3);
+  --accent-secondary: #10b981; /* Emerald green */
+  --accent-secondary-glow: rgba(16, 185, 129, 0.2);
+  --accent-warning: #f59e0b;
+  --accent-error: #f43f5e;
+  --accent-error-glow: rgba(244, 63, 94, 0.2);
+  --accent-indigo: #6366f1;
+
+  /* Typography & Text */
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-code: #f1f5f9;
+  --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* Real Cursor / VS Code Dark Syntax Highlighting */
+  --syntax-keyword: #569cd6;   /* VS Code blue */
+  --syntax-string: #ce9178;    /* VS Code terracotta */
+  --syntax-function: #dcdcaa;  /* VS Code golden yellow */
+  --syntax-number: #b5cea8;    /* VS Code light sage */
+  --syntax-comment: #6a9955;   /* VS Code green */
+  --syntax-class: #4ec9b0;     /* VS Code teal */
+  --syntax-operator: #d4d4d4;  /* VS Code light gray */
+  --syntax-builtin: #4ec9b0;   /* VS Code teal */
+  --syntax-decorator: #c586c0; /* VS Code magenta */
+  --syntax-param: #9cdcfe;     /* VS Code param light blue */
+
+  /* Difficulty colors */
+  --easy: #10b981;
+  --medium: #f59e0b;
+  --hard: #f43f5e;
+
+  /* Border & Surface */
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-active: rgba(56, 189, 248, 0.65);
+  --glass-bg: rgba(23, 23, 26, 0.92);
+  --glass-border: rgba(255, 255, 255, 0.12);
+
+  /* Spacing */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 16px rgba(0, 122, 204, 0.35);
+}
+
+[data-theme="cursor-light"],
+[data-theme="light"] {
+  /* 3. Cursor Light Mode — Soothing Yellow-Tinted Warm Ivory Cream & Royal Blue */
+  --bg-primary: #FAF7EE;      /* Warm ivory with gentle soothing yellow tint */
+  --bg-secondary: #F3EEDD;    /* Warm parchment / cream */
+  --bg-elevated: #EDE6D2;     /* Mellow warm cream surface */
+  --bg-card: #FDFBF5;         /* Soft warm ivory card surface */
+  --bg-input: #F6F1E3;        /* Warm paper editor canvas */
+
+  /* Accents — Cursor Deep Royal Blue */
+  --accent-primary: #0066b8; /* VS Code / Cursor light blue */
+  --accent-primary-hover: #0284c7;
+  --accent-primary-glow: rgba(0, 102, 184, 0.16);
+  --accent-secondary: #16a34a; /* Vibrant emerald green */
+  --accent-secondary-glow: rgba(22, 163, 74, 0.16);
+  --accent-warning: #d97706;
+  --accent-error: #dc2626;
+  --accent-error-glow: rgba(220, 38, 38, 0.16);
+  --accent-indigo: #4338ca;
+
+  /* Typography & Text — Deep Warm Espresso / Charcoal (eye friendly, no stark glare) */
+  --text-primary: #292524;     /* Warm dark charcoal */
+  --text-secondary: #57534e;   /* Warm muted stone */
+  --text-muted: #78716c;       /* Soft warm sand gray */
+  --text-code: #292524;
+  --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* Real Cursor / VS Code Light Syntax Highlighting on Warm Tint */
+  --syntax-keyword: #005cc5;   /* Crisp blue keyword */
+  --syntax-string: #9a1a1a;    /* Warm crimson string */
+  --syntax-function: #795e26;  /* Amber-brown function */
+  --syntax-number: #098658;    /* Forest green number */
+  --syntax-comment: #6a737d;   /* Warm slate comment */
+  --syntax-class: #22863a;     /* Teal-green class */
+  --syntax-operator: #24292e;  /* Operator charcoal */
+  --syntax-builtin: #005cc5;   /* Builtin blue */
+  --syntax-decorator: #6f42c1; /* Decorator purple */
+  --syntax-param: #24292e;     /* Parameter dark */
+
+  /* Difficulty colors */
+  --easy: #16a34a;
+  --medium: #d97706;
+  --hard: #dc2626;
+
+  /* Border & Surface — Warm Amber & Sand Undertones */
+  --border-subtle: rgba(120, 100, 70, 0.14);
+  --border-active: rgba(0, 102, 184, 0.65);
+  --glass-bg: rgba(250, 247, 238, 0.94);
+  --glass-border: rgba(120, 100, 70, 0.16);
+
+  /* Spacing */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  /* Shadows — Warm diffused shadows */
+  --shadow-sm: 0 1px 3px rgba(80, 60, 20, 0.06);
+  --shadow-md: 0 4px 12px rgba(80, 60, 20, 0.08);
+  --shadow-lg: 0 8px 24px rgba(80, 60, 20, 0.12);
+  --shadow-glow: 0 0 16px rgba(0, 102, 184, 0.18);
 }
 
 * {
@@ -897,13 +1024,15 @@ button {
 
 .typing-stats-bar {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 10px 16px;
   margin-bottom: 16px;
-  padding: 12px 20px;
+  padding: 10px 16px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   align-items: center;
+  justify-content: space-between;
 }
 
 .typing-stat {
@@ -939,9 +1068,11 @@ button {
 }
 
 .typing-actions {
-  margin-left: auto;
   display: flex;
-  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
 }
 
 .btn {

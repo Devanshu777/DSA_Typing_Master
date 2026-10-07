@@ -194,7 +194,9 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
 
   const minutes = elapsedSec / 60;
   const currentWpm = minutes > 0.05 ? Math.round((correctCount / 5) / minutes) : 0;
-  const currentAccuracy = totalKeystrokes > 0 ? Math.round((correctCount / totalKeystrokes) * 100) : 100;
+  const currentAccuracy = totalKeystrokes > 0
+    ? Math.max(0, Math.min(100, Math.round(((totalKeystrokes - mistakes) / totalKeystrokes) * 100)))
+    : 100;
   const progressPercent = targetChars > 0 ? Math.min(100, Math.round((userTypedLength / targetChars) * 100)) : 0;
 
   const DUMMY_BUFFER = "  ";
@@ -227,7 +229,12 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
     const timeInSec = Math.max(1, currentElapsed);
     const min = timeInSec / 60;
     const finalWpm = Math.max(1, Math.round((targetChars / 5) / min));
-    const finalAcc = Math.round((targetChars / Math.max(targetChars, keystrokes)) * 100);
+    
+    // Standard typing accuracy: Net Accuracy factoring in all mistakes made
+    const totalKeys = Math.max(1, keystrokes);
+    const totalMistakes = Math.max(0, errs);
+    const correctKeys = Math.max(0, totalKeys - totalMistakes);
+    const finalAcc = Math.round((correctKeys / totalKeys) * 100);
 
     const statsObj = {
       problemId: problem.id,
@@ -235,7 +242,7 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
       wpm: finalWpm,
       accuracy: Math.max(0, Math.min(100, finalAcc)),
       timeSec: timeInSec,
-      mistakes: errs
+      mistakes: totalMistakes
     };
 
     setFinalStats(statsObj);
@@ -498,7 +505,7 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
           <span className={`typing-stat-value ${mistakes === 0 ? "good" : "bad"}`}>{mistakes}</span>
         </div>
 
-        <div className="typing-stat" style={{ flex: 1, maxWidth: "160px" }}>
+        <div className="typing-stat" style={{ flex: "0 1 100px", minWidth: "60px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
             <span className="typing-stat-label">Progress</span>
             <span className="typing-stat-label">{progressPercent}%</span>
@@ -512,6 +519,7 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
           {isEligibleForSkip && (
             <label
               className={`toggle-pill ${skipBoilerplate ? "active" : ""}`}
+              style={{ flexShrink: 0 }}
               title="When ON, class Solution and def signature remain visible and marked done, so your cursor starts directly on the actual logic"
             >
               <input
@@ -532,6 +540,7 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
           {/* Blind Recall Mode Toggle */}
           <label
             className={`toggle-pill ${blindRecall ? "active" : ""}`}
+            style={{ flexShrink: 0 }}
             title="Interview Simulation: Obscures untyped code so you type from memory (Alt + B)"
           >
             <input
@@ -551,7 +560,7 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
             <button
               onClick={triggerPeek}
               className={`btn ${isPeeking ? "btn-primary" : "btn-ghost"}`}
-              style={{ height: "28px", fontSize: "0.74rem", gap: "5px" }}
+              style={{ height: "28px", fontSize: "0.74rem", gap: "5px", flexShrink: 0 }}
               title="Unblur code for 1.5 seconds (Alt + H)"
             >
               <span>{isPeeking ? "Peeking (1.5s)..." : "Peek"}</span>
@@ -561,6 +570,7 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
 
           <label
             className={`toggle-pill ${autoIndent ? "active" : ""}`}
+            style={{ flexShrink: 0 }}
             title="When ON, pressing Enter automatically preserves Python indentation"
           >
             <input
@@ -573,6 +583,7 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
 
           <label
             className={`toggle-pill ${autoCloseBrackets ? "active" : ""}`}
+            style={{ flexShrink: 0 }}
             title="When ON, typing { [ ( automatically pairs {} [] ()"
           >
             <input
@@ -583,16 +594,19 @@ export default function TypingEngine({ problem, onNext, onPrev }) {
             <span>Auto-Pairs</span>
           </label>
 
-          <button onClick={handleReset} className="btn btn-ghost" title="Restart typing (Alt + R)" style={{ height: "28px" }}>
-            <RotateCcwIcon size={12} />
-            <span>Restart</span>
-          </button>
-          {onNext && (
-            <button onClick={onNext} className="btn btn-ghost" title="Skip to next problem (Alt + Right)" style={{ height: "28px" }}>
-              <span>Next</span>
-              <ChevronRightIcon size={12} />
+          {/* Action Buttons: Restart & Next (always pinned and never cut off) */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+            <button onClick={handleReset} className="btn btn-ghost" title="Restart typing (Alt + R)" style={{ height: "28px", flexShrink: 0 }}>
+              <RotateCcwIcon size={12} />
+              <span>Restart</span>
             </button>
-          )}
+            {onNext && (
+              <button onClick={onNext} className="btn btn-ghost" title="Skip to next problem (Alt + Right)" style={{ height: "28px", flexShrink: 0 }}>
+                <span>Next</span>
+                <ChevronRightIcon size={12} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
